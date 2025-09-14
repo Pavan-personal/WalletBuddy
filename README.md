@@ -1,441 +1,230 @@
-# 🚀 AI Portfolio Cards - Tatum Hackathon Project
+# WalletBuddy AI - Backend Server
 
-A revolutionary AI-powered crypto portfolio analyzer that creates beautiful trading card-style visualizations of your blockchain journey. Built with Tatum APIs and Gemini AI.
+## Overview
+A comprehensive backend service for WalletBuddy AI that provides portfolio analysis, AI-powered insights, and blockchain data integration for cryptocurrency wallets.
 
-## 📋 Table of Contents
+## Architecture
 
-- [Project Overview](#project-overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [API Keys Setup](#api-keys-setup)
-- [Usage](#usage)
-- [Architecture](#architecture)
-- [Troubleshooting](#troubleshooting)
-- [Resources & Documentation](#resources--documentation)
-- [Development Guide](#development-guide)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
+### Core Services
+- **Portfolio Service**: Manages wallet portfolio data and analysis
+- **AI Service**: Integrates with Gemini AI for portfolio insights
+- **RPC Service**: Handles blockchain data fetching
+- **Token Metadata Service**: Manages token information and metadata
+- **Transaction Cache Service**: Optimizes transaction data retrieval
+- **Tatum Service**: Blockchain data provider integration
 
-## 🎯 Project Overview
+### Database
+- **PostgreSQL** with Prisma ORM
+- **Schema**: Portfolio data, transactions, token metadata, AI responses
 
-**AI Portfolio Cards** is a unique web application that combines blockchain data analysis with AI-powered insights to create personalized trading card-style visualizations of users' crypto portfolios. Users can connect their wallets across multiple networks, ask AI questions about their trading history, and generate beautiful, shareable portfolio cards.
+## API Endpoints
 
-### 🏆 Hackathon Requirements Met
-- ✅ **Tatum API Integration** - Full blockchain data access
-- ✅ **Direct Tatum SDK Integration** - Fast and reliable blockchain access
-- ✅ **Multi-chain Support** - Ethereum, Base, Polygon, Solana, Bitcoin
-- ✅ **Innovation** - Unique trading card concept
-- ✅ **Technical Excellence** - Complex AI + blockchain integration
+### Portfolio Routes (`/api/portfolio`)
+- `GET /portfolio/:address` - Get portfolio data for wallet address
+- `POST /portfolio/populate` - Populate database with wallet data
+- `GET /portfolio/status/:address` - Check population status
+- `GET /portfolio/formatted/:address` - Get formatted portfolio data
 
-## ✨ Features
+### AI Routes (`/api/ai`)
+- `POST /query` - AI-powered portfolio analysis and Q&A
+- `GET /health` - Health check
 
-### 🎨 Portfolio Cards
-- **Trading Card Style** - Pokemon/Yu-Gi-Oh inspired design
-- **Multiple Themes** - Cyberpunk, Retro Gaming, Minimalist
-- **Animated Effects** - Subtle sparkles and hover effects
-- **Shareable Format** - Download as image or share on social media
+### RPC Routes (`/api/rpc`)
+- `POST /rpc` - Generic RPC calls to blockchain networks
+- `GET /networks` - Available network configurations
 
-### 🤖 AI Chat Interface
-- **Natural Language Queries** - Ask anything about your portfolio
-- **Smart Validation** - Filters non-crypto related questions
-- **Contextual Responses** - AI understands your trading patterns
-- **Quick Action Buttons** - Common questions with one click
+### Transaction Routes (`/api/transactions`)
+- `GET /transactions/:address` - Get transaction history
+- `POST /transactions/cache` - Cache transaction data
 
-### 📊 Analytics Dashboard
-- **Multi-tab Interface** - Profits, Losses, Win Rate, All Stats
-- **Real-time Data** - Live portfolio updates
-- **Historical Analysis** - Trading pattern insights
-- **Achievement System** - Unlock badges based on trading behavior
+## Environment Variables
 
-### 🌐 Multi-Chain Support
-- **EVM Networks** - Ethereum, Base, Polygon (MetaMask)
-- **Non-EVM Networks** - Solana (Phantom), Bitcoin (Bitcoin wallet)
-- **Network Switching** - Easy dropdown selection
-- **Unified Interface** - Same experience across all chains
+Create a `.env` file in the server directory:
 
-## 🛠 Tech Stack
+```env
+# Database
+DATABASE_URL="postgresql://username:password@localhost:5432/walletbuddy"
 
-### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **Framer Motion** - Animations
-- **React Query** - State management
+# Tatum API (Blockchain Data)
+TATUM_API_KEY_MAINNET="your_tatum_mainnet_key"
+TATUM_API_KEY_TESTNET="your_tatum_testnet_key"
 
-### Backend
-- **Node.js** - Runtime
-- **Express.js** - Web framework
-- **Socket.io** - Real-time communication
+# Gemini AI
+GEMINI_API_KEY="your_gemini_api_key"
 
-### Blockchain & AI
-- **Tatum SDK** - Blockchain data access
-- **Direct Tatum SDK** - Fast and reliable blockchain access
-- **Google Gemini AI** - Natural language processing
-- **MetaMask** - EVM wallet connection
-- **Phantom** - Solana wallet connection
+# WalletConnect (Optional)
+WALLET_CONNECT_PROJECT_ID="your_walletconnect_project_id"
 
-### Infrastructure
-- **Vercel** - Frontend hosting
-- **Railway/Heroku** - Backend hosting
-- **MongoDB Atlas** - Database
-- **IPFS** - Decentralized storage
+# Server Configuration
+PORT=3001
+NODE_ENV="development"
+CORS_ORIGIN="http://localhost:5173"
+```
 
-## 📦 Installation
+## Installation & Setup
 
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- Git
-
-### Quick Start
+1. **Install Dependencies**
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/ai-portfolio-cards.git
-cd ai-portfolio-cards
-
-# Install dependencies
+   cd server
 npm install
+   ```
 
-# Install Tatum packages
-npm install @tatumio/tatum
+2. **Database Setup**
+   ```bash
+   # Initialize database
+   npm run db:init
+   
+   # Run migrations
+   npx prisma migrate dev
+   ```
 
-# Install AI packages
-npm install @google/generative-ai
+3. **Start Server**
+   ```bash
+   npm start
+   ```
 
-# Install styling packages
-npm install tailwindcss @tailwindcss/forms @tailwindcss/typography
+## Workflow
 
-# Start development server
-npm run dev
+### 1. Wallet Connection Flow
+```
+User connects wallet → Frontend sends address → Backend validates → Returns connection status
 ```
 
-
-## 🔑 Configuration
-
-### Environment Variables
-Create a `.env.local` file in the root directory:
-
-```env
-# Tatum Configuration
-REACT_APP_TATUM_API_KEY=your_tatum_api_key_here
-TATUM_API_KEY=your_tatum_api_key_here
-
-# Gemini AI Configuration
-REACT_APP_GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_API_KEY=your_gemini_api_key_here
-
-
-# Database Configuration
-MONGODB_URI=your_mongodb_connection_string
-
-# Wallet Configuration
-REACT_APP_WALLET_CONNECT_PROJECT_ID=your_wallet_connect_project_id
+### 2. Portfolio Population Flow
+```
+Wallet connected → Trigger population → Fetch blockchain data → Process transactions → 
+Update token metadata → Store in database → Return population status
 ```
 
-
-## 🔐 API Keys Setup
-
-### 1. Tatum API Key
-1. Visit [Tatum Dashboard](https://dashboard.tatum.io)
-2. Sign up for free account
-3. Navigate to API Keys section
-4. Generate new API key
-5. Copy and add to environment variables
-
-### 2. Gemini AI API Key
-1. Visit [Google AI Studio](https://ai.google.dev)
-2. Sign in with Google account
-3. Create new API key
-4. Copy and add to environment variables
-
-### 3. Wallet Connect Project ID
-1. Visit [WalletConnect Cloud](https://cloud.walletconnect.com)
-2. Create new project
-3. Copy Project ID
-4. Add to environment variables
-
-## 🚀 Usage
-
-### 1. Connect Wallet
-- Click "Connect Wallet" button
-- Select your preferred network
-- Approve connection in wallet
-
-### 2. Generate Portfolio Card
-- Click "Get My Card" button
-- AI analyzes your portfolio
-- Beautiful card is generated
-- Download or share
-
-### 3. Ask AI Questions
-- Type questions in chat interface
-- Use quick action buttons
-- Get personalized insights
-- View detailed analytics
-
-### 4. Explore Analytics
-- Switch between tabs (Profits, Losses, Win Rate)
-- View real-time data
-- Track performance over time
-- Unlock achievements
-
-## 🏗 Architecture
-
-### Frontend Architecture
+### 3. AI Analysis Flow
 ```
-src/
-├── components/
-│   ├── WalletConnection.tsx      # Wallet connection logic
-│   ├── PortfolioCard.tsx         # Card generation and display
-│   ├── AIChat.tsx               # Chat interface
-│   ├── StatsTabs.tsx            # Analytics dashboard
-│   └── NetworkSelector.tsx      # Network switching
-├── services/
-│   ├── tatumService.ts          # Tatum SDK integration
-│   ├── geminiService.ts         # AI integration
-│   └── walletService.ts         # Wallet management
-├── hooks/
-│   ├── useWallet.ts             # Wallet state management
-│   ├── usePortfolio.ts          # Portfolio data
-│   └── useAI.ts                 # AI chat functionality
-└── utils/
-    ├── constants.ts             # App constants
-    ├── helpers.ts               # Utility functions
-    └── types.ts                 # TypeScript types
+User query → Send to Gemini AI → Process response → Return formatted insights
 ```
 
-### Backend Architecture
+### 4. Data Flow Architecture
 ```
-server/
-├── routes/
-│   ├── wallet.js                # Wallet operations
-│   ├── portfolio.js             # Portfolio data
-│   ├── ai.js                    # AI processing
-├── services/
-│   ├── tatumService.js          # Tatum API calls
-│   ├── aiService.js             # AI processing
-├── middleware/
-│   ├── auth.js                  # Authentication
-│   └── validation.js            # Input validation
-└── utils/
-    ├── database.js              # Database connection
-    └── logger.js                # Logging
+Frontend → API Gateway → Service Layer → Database
+                ↓
+         External APIs (Tatum, Gemini)
 ```
 
-## 🔧 Troubleshooting
+## Key Features
 
-### Common Issues
+### Portfolio Analysis
+- Real-time balance tracking
+- Transaction history analysis
+- Token metadata management
+- Profit/loss calculations
 
-#### 1. Wallet Connection Failed
-**Problem:** MetaMask not connecting
-**Solutions:**
-- Check if MetaMask is installed
-- Ensure correct network is selected
-- Clear browser cache
-- Check console for errors
+### AI Integration
+- Natural language queries
+- Portfolio insights
+- Transaction analysis
+- Investment recommendations
 
-- Check environment variables
+### Blockchain Integration
+- Multi-chain support (Ethereum, Base)
+- Real-time data fetching
+- Transaction caching
+- Token metadata updates
 
-#### 3. AI Chat Not Responding
-**Problem:** Gemini AI not working
-**Solutions:**
-- Verify Gemini API key
-- Check API quota limits
-- Ensure internet connection
-- Check console for errors
+## Database Schema
 
-#### 4. Portfolio Data Not Loading
-**Problem:** Tatum API calls failing
-**Solutions:**
-- Verify Tatum API key
-- Check network connection
-- Ensure wallet is connected
-- Check API rate limits
+### Tables
+- `portfolios` - Wallet portfolio data
+- `transactions` - Transaction history
+- `tokens` - Token metadata
+- `ai_responses` - AI query responses
 
-#### 5. Card Generation Failed
-**Problem:** Portfolio card not generating
-**Solutions:**
-- Ensure portfolio data is loaded
-- Check AI service status
-- Verify image generation permissions
-- Clear browser cache
+### Relationships
+- One-to-many: Portfolio → Transactions
+- Many-to-many: Portfolio → Tokens (through holdings)
 
-### Debug Mode
-Enable debug mode by setting:
-```env
-REACT_APP_DEBUG=true
-NODE_ENV=development
-```
+## Development
 
-### Logs
-Check logs in:
-- Browser console (Frontend)
-- Terminal (Backend)
-
-## 📚 Resources & Documentation
-
-### Tatum Resources
-- **Main Website:** [tatum.io](https://tatum.io)
-- **Documentation:** [docs.tatum.io](https://docs.tatum.io)
-- **SDK Documentation:** [tatum.io/sdk](https://tatum.io/sdk)
-- **API Reference:** [docs.tatum.io/reference](https://docs.tatum.io/reference)
-- **Dashboard:** [dashboard.tatum.io](https://dashboard.tatum.io)
-- **GitHub SDK:** [github.com/tatumio/tatum-js](https://github.com/tatumio/tatum-js)
-
-### AI Resources
-- **Gemini AI:** [ai.google.dev](https://ai.google.dev)
-- **Gemini Documentation:** [ai.google.dev/docs](https://ai.google.dev/docs)
-
-### Blockchain Resources
-- **Ethereum:** [ethereum.org](https://ethereum.org)
-- **Base:** [base.org](https://base.org)
-- **Polygon:** [polygon.technology](https://polygon.technology)
-- **Solana:** [solana.com](https://solana.com)
-- **Bitcoin:** [bitcoin.org](https://bitcoin.org)
-
-### Wallet Resources
-- **MetaMask:** [metamask.io](https://metamask.io)
-- **Phantom:** [phantom.app](https://phantom.app)
-- **WalletConnect:** [walletconnect.com](https://walletconnect.com)
-
-### Development Resources
-- **React:** [react.dev](https://react.dev)
-- **TypeScript:** [typescriptlang.org](https://typescriptlang.org)
-- **Tailwind CSS:** [tailwindcss.com](https://tailwindcss.com)
-- **Node.js:** [nodejs.org](https://nodejs.org)
-- **MongoDB:** [mongodb.com](https://mongodb.com)
-
-### Design Resources
-- **Figma:** [figma.com](https://figma.com)
-- **Unsplash:** [unsplash.com](https://unsplash.com)
-- **Heroicons:** [heroicons.com](https://heroicons.com)
-- **Font Awesome:** [fontawesome.com](https://fontawesome.com)
-
-## 🛠 Development Guide
-
-### Project Setup
-1. Fork the repository
-2. Clone your fork
-3. Install dependencies
-4. Set up environment variables
-5. Start development server
-
-### Code Style
-- Use TypeScript for type safety
-- Follow React best practices
-- Use Tailwind CSS for styling
-- Write meaningful commit messages
-- Add comments for complex logic
+### Scripts
+- `npm start` - Start production server
+- `npm run dev` - Start development server
+- `npm run db:init` - Initialize database
+- `npm run db:reset` - Reset database
 
 ### Testing
-```bash
-# Run tests
-npm test
+- Health check: `GET /api/ai/health`
+- Test portfolio: `GET /api/portfolio/0x...`
+- Test AI: `POST /api/ai/query`
 
-# Run tests with coverage
-npm run test:coverage
+## Deployment
 
-# Run e2e tests
-npm run test:e2e
+### Production Checklist
+- [ ] Set all environment variables
+- [ ] Configure database connection
+- [ ] Set up CORS for production domain
+- [ ] Configure rate limiting
+- [ ] Set up monitoring
+
+### Docker Support
+```dockerfile
+FROM node:18
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3001
+CMD ["npm", "start"]
 ```
 
-### Building
-```bash
-# Build for production
-npm run build
+## Monitoring & Logs
 
-# Preview production build
-npm run preview
+### Health Endpoints
+- `/api/ai/health` - AI service health
+- `/api/portfolio/status/:address` - Portfolio status
+
+### Logging
+- Request/response logging
+- Error tracking
+- Performance monitoring
+
+## Security
+
+### API Security
+- CORS configuration
+- Input validation
+- Rate limiting
+- Error handling
+
+### Data Protection
+- Encrypted database connections
+- Secure API key management
+- Input sanitization
+
+## Troubleshooting
+
+### Common Issues
+1. **Database Connection**: Check DATABASE_URL
+2. **API Keys**: Verify Tatum and Gemini keys
+3. **CORS**: Ensure CORS_ORIGIN matches frontend URL
+4. **Port Conflicts**: Check PORT environment variable
+
+### Debug Commands
+```bash
+# Check database connection
+npm run db:check
+
+# Test API endpoints
+curl http://localhost:3001/api/ai/health
+
+# View logs
+npm run logs
 ```
 
-## 🚀 Deployment
+## Contributing
 
-### Frontend (Vercel)
-1. Connect GitHub repository to Vercel
-2. Set environment variables
-3. Deploy automatically on push
-
-### Backend (Railway/Heroku)
-1. Connect GitHub repository
-2. Set environment variables
-3. Deploy automatically on push
-
-### Database (MongoDB Atlas)
-1. Create MongoDB Atlas account
-2. Create cluster
-3. Get connection string
-4. Add to environment variables
-
-## 🤝 Contributing
-
-### How to Contribute
 1. Fork the repository
 2. Create feature branch
 3. Make changes
-4. Add tests
+4. Test thoroughly
 5. Submit pull request
 
-### Pull Request Process
-1. Ensure tests pass
-2. Update documentation
-3. Add changelog entry
-4. Request review
-5. Merge after approval
+## License
 
-### Code of Conduct
-- Be respectful
-- Help others
-- Follow guidelines
-- Report issues
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🏆 Hackathon Submission
-
-### Project Details
-- **Name:** AI Portfolio Cards
-- **Description:** AI-powered crypto portfolio analyzer with trading card visualizations
-- **Tech Stack:** React, TypeScript, Tatum SDK, Gemini AI
-- **Networks:** Ethereum, Base, Polygon, Solana, Bitcoin
-
-### Demo Video
-- **Duration:** 2-3 minutes
-- **Content:** Show wallet connection, AI chat, card generation
-- **Platform:** YouTube or Loom
-
-### Submission Checklist
-- [ ] GitHub repository public
-- [ ] Demo video uploaded
-- [ ] Project description complete
-- [ ] All features working
-- [ ] Documentation updated
-
-## 📞 Support
-
-### Getting Help
-- **GitHub Issues:** [github.com/yourusername/ai-portfolio-cards/issues](https://github.com/yourusername/ai-portfolio-cards/issues)
-- **Discord:** [discord.gg/tatum](https://discord.gg/tatum)
-- **Email:** your-email@example.com
-
-### FAQ
-**Q: Which wallets are supported?**
-A: MetaMask for EVM networks, Phantom for Solana, Bitcoin wallet for Bitcoin.
-
-**Q: Is there a cost to use the app?**
-A: The app is free to use. Only blockchain transaction fees apply.
-
-**Q: Can I use testnet networks?**
-A: Yes, all supported networks have testnet versions available.
-
-**Q: How secure is my data?**
-A: All data is processed locally. No private keys are stored.
-
----
-
-**Made with ❤️ for the Tatum Hackathon**
-
-*Built with Tatum SDK and Gemini AI*
+MIT License - see LICENSE file for details
