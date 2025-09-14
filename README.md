@@ -2,27 +2,47 @@
 
 ## Demo
 
+# Starting the server with Gemini & Tatum API integrations
+
 <img width="1470" height="670" alt="q1" src="https://github.com/user-attachments/assets/91f3c095-a4df-484b-99af-bcdb4b23d201" />
+
+# Populating the transaction data into database by getTransaction()
 
 <img width="738" height="670" alt="q2" src="https://github.com/user-attachments/assets/6f9db4fe-e1f9-45b7-8dc7-b9490aa4982a" />
 
+# 2 transactions per second will be performed (as rate limit is 3 calls per second)
+
 <img width="735" height="670" alt="q3" src="https://github.com/user-attachments/assets/44bcae8d-e66c-4d35-a805-c7ed04e6aef3" />
+
+# Token data like symbol and amount will be fetched and populated into db successfully.
 
 <img width="737" height="670" alt="q4" src="https://github.com/user-attachments/assets/00400e4e-4771-48d4-a17f-5ec53db02a34" />
 
+# Normal questions like balance & transaction count can be answered by rpc node call.
+
 <img width="1470" height="670" alt="q5" src="https://github.com/user-attachments/assets/f0425e61-e4e8-45df-85fd-4f1560bf9dc3" />
+
+# But complex queries like profit loss, token related, buys and sells, can be deduced from database. (which are initally fetched from rpc itself)
 
 <img width="1470" height="670" alt="q6" src="https://github.com/user-attachments/assets/f56f6f92-44c7-413b-af7d-d14bb3e3e891" />
 
+# Here I asked about Vine coin related transaction to AI and it answers as well.
+
 <img width="1470" height="670" alt="q7" src="https://github.com/user-attachments/assets/67fbfc25-f8ec-465e-ab67-0758c5179a76" />
+
+# These are the wallet_transactions collection snaps (amount, symbols, addresses and name of token)
 
 <img width="1208" height="670" alt="q8" src="https://github.com/user-attachments/assets/ed16dd18-90e0-4fc3-b8af-92c141a3cbb5" />
 
 <img width="1470" height="670" alt="q9" src="https://github.com/user-attachments/assets/898c8414-7c04-4c00-bc09-f7f0b6507299" />
 
+# wallet_token_summary collections
+
 <img width="1470" height="670" alt="q10" src="https://github.com/user-attachments/assets/16c53a4b-66f5-409c-886c-5bda3a01a1af" />
 
 <img width="1470" height="670" alt="q11" src="https://github.com/user-attachments/assets/cfa937b8-f3b2-471b-aeeb-7b0c58ba78d7" />
+
+# wallet_portfolio collection
 
 <img width="1470" height="670" alt="q12" src="https://github.com/user-attachments/assets/7d1463a4-76a4-4962-a522-6eba02efc880" />
 
