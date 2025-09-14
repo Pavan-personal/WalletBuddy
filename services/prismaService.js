@@ -163,15 +163,31 @@ class PrismaService {
   }
 
   // Clear transaction cache for a wallet
-  async clearTransactionCache(walletAddress, network) {
+  async clearTransactionCache(walletAddress, network = null) {
     try {
       const normalizedAddress = walletAddress.toLowerCase();
+      
+      // If network is specified, clear only that network's data
+      // Otherwise, clear all networks for this address
+      const whereClause = {
+        walletAddress: normalizedAddress
+      };
+      
+      if (network) {
+        whereClause.network = network;
+      }
+      
+      // Delete transactions for this address
       await this.prisma.walletTransaction.deleteMany({
-        where: {
-          walletAddress: normalizedAddress,
-          network
-        }
+        where: whereClause
       });
+      
+      // Also delete token summaries for this address
+      await this.prisma.walletTokenSummary.deleteMany({
+        where: whereClause
+      });
+      
+      console.log(`🧹 Cleared transactions${network ? ` for ${network}` : ''} for address ${walletAddress}`);
       return true;
     } catch (error) {
       console.error('Error clearing transaction cache:', error);

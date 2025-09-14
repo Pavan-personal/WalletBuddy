@@ -11,6 +11,8 @@ router.get('/:network/:address/balance', async (req, res) => {
     console.log(`💰 Getting balance for ${address} on ${network} (RPC)`);
     
     const result = await rpcService.getNativeBalance(network, address);
+    
+    // Return the result immediately
     res.json(result);
   } catch (error) {
     console.error('Error getting balance:', error);
@@ -30,6 +32,8 @@ router.get('/:network/:address/count', async (req, res) => {
     console.log(`📊 Getting transaction count for ${address} on ${network} (RPC)`);
     
     const result = await rpcService.getTransactionCount(network, address);
+    
+    // Return the result immediately
     res.json(result);
   } catch (error) {
     console.error('Error getting transaction count:', error);

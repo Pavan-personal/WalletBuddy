@@ -13,6 +13,7 @@ const portfolioRoutes = require('./routes/portfolioRoutes');
 const aiRoutes = require('./routes/ai');
 const transactionRoutes = require('./routes/transactions');
 const rpcRoutes = require('./routes/rpcRoutes');
+const populateDbRoutes = require('./routes/populateDb');
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use('/api/portfolio', portfolioRoutes); // Using the new portfolio routes
 app.use('/api/ai', aiRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/rpc', rpcRoutes); // Fast RPC calls for simple queries
+app.use('/api/db', populateDbRoutes); // Database population utilities
 
 // Error handling middleware
 app.use((err, req, res, next) => {

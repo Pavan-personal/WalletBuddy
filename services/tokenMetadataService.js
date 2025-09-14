@@ -8,6 +8,11 @@ class TokenMetadataService {
 
   // Get token metadata from various sources
   async getTokenMetadata(tokenAddress, network = 'solana-mainnet') {
+    // Handle undefined or null token addresses
+    if (!tokenAddress) {
+      return this.getPatternBasedMetadata('unknown');
+    }
+    
     // Check cache first
     const cacheKey = `${network}-${tokenAddress}`;
     const cached = this.cache.get(cacheKey);
@@ -37,6 +42,11 @@ class TokenMetadataService {
   // Fetch Solana token metadata from multiple sources
   async getSolanaTokenMetadata(tokenAddress) {
     try {
+      // Handle undefined or null token addresses
+      if (!tokenAddress) {
+        return this.getPatternBasedMetadata('unknown');
+      }
+      
       // Try Jupiter Token List first (most comprehensive)
       let metadata = await this.getFromJupiterTokenList(tokenAddress);
       if (metadata) return metadata;
@@ -61,11 +71,20 @@ class TokenMetadataService {
   // Jupiter Token List (most comprehensive for Solana)
   async getFromJupiterTokenList(tokenAddress) {
     try {
+      if (!tokenAddress) {
+        return null;
+      }
+      
       const response = await axios.get('https://token.jup.ag/all', {
         timeout: 5000
       });
 
+      if (!response.data || !Array.isArray(response.data)) {
+        return null;
+      }
+
       const token = response.data.find(t => 
+        t && t.address && tokenAddress && 
         t.address.toLowerCase() === tokenAddress.toLowerCase()
       );
 
@@ -87,11 +106,20 @@ class TokenMetadataService {
   // Solana Token List
   async getFromSolanaTokenList(tokenAddress) {
     try {
+      if (!tokenAddress) {
+        return null;
+      }
+      
       const response = await axios.get('https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json', {
         timeout: 5000
       });
 
+      if (!response.data || !response.data.tokens || !Array.isArray(response.data.tokens)) {
+        return null;
+      }
+
       const token = response.data.tokens.find(t => 
+        t && t.address && tokenAddress && 
         t.address.toLowerCase() === tokenAddress.toLowerCase()
       );
 
@@ -113,6 +141,10 @@ class TokenMetadataService {
   // CoinGecko API
   async getFromCoinGecko(tokenAddress, platform) {
     try {
+      if (!tokenAddress) {
+        return null;
+      }
+      
       const response = await axios.get(`https://api.coingecko.com/api/v3/coins/${platform}/contract/${tokenAddress}`, {
         timeout: 5000
       });
@@ -138,6 +170,10 @@ class TokenMetadataService {
   // EVM token metadata (Ethereum, Base, etc.)
   async getEVMTokenMetadata(tokenAddress, network) {
     try {
+      if (!tokenAddress) {
+        return this.getPatternBasedMetadata('unknown');
+      }
+      
       // Try CoinGecko first
       let platform = 'ethereum';
       if (network.includes('base')) platform = 'base';
@@ -156,6 +192,16 @@ class TokenMetadataService {
 
   // Pattern-based metadata as fallback
   getPatternBasedMetadata(tokenAddress) {
+    // Handle undefined or invalid token addresses
+    if (!tokenAddress || tokenAddress === 'unknown') {
+      return {
+        symbol: 'UNKNOWN',
+        name: 'Unknown Token',
+        decimals: 0,
+        source: 'pattern-unknown'
+      };
+    }
+    
     const shortAddr = tokenAddress.substring(0, 8);
 
     // Pump.fun pattern
