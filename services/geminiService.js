@@ -156,6 +156,11 @@ class GeminiService {
 
   async answerQuestion(question, walletData) {
     try {
+      // Check if this is a balance query from RPC
+      if (walletData.type === 'balance_query') {
+        return this.answerBalanceQuestion(question, walletData);
+      }
+      
       // Enhanced prompt to handle complete wallet data from all tables
       const prompt = `
         Answer this question about the crypto portfolio: "${question}"
@@ -263,6 +268,48 @@ class GeminiService {
       };
     } catch (error) {
       console.error('Error answering question with Gemini:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  async answerBalanceQuestion(question, balanceData) {
+    try {
+      // Create a specialized prompt for balance queries
+      const prompt = `
+        Answer this question about the crypto wallet: "${question}"
+        
+        Wallet Address: ${balanceData.address}
+        Last Updated: ${balanceData.timestamp}
+        
+        Balance Information:
+        ${Object.entries(balanceData.networks || {}).map(([network, data]) => {
+          const networkName = network.split('-')[0].toUpperCase();
+          return `${networkName}: ${data.balance} ${data.symbol} (${data.success ? 'Successfully fetched' : 'Failed to fetch'})`;
+        }).join('\n')}
+        
+        Provide a helpful, accurate answer based on the balance data above. If the balance is 0, state that clearly.
+        If the balance is greater than 0, mention the exact amount and which network it's on.
+        
+        Keep the response conversational and helpful.
+      `;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      return {
+        success: true,
+        data: {
+          question,
+          answer: text,
+          timestamp: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      console.error('Error answering balance question with Gemini:', error);
       return {
         success: false,
         error: error.message
