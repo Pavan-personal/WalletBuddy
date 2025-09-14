@@ -154,19 +154,19 @@ class GeminiService {
     }
   }
 
-  async answerQuestion(question, portfolioData) {
+  async answerQuestion(question, walletData) {
     try {
-      // Enhanced prompt to handle comprehensive portfolio data
+      // Enhanced prompt to handle complete wallet data from all tables
       const prompt = `
         Answer this question about the crypto portfolio: "${question}"
         
-        Portfolio Data:
-        - Address: ${portfolioData.address}
-        - Last Updated: ${new Date(portfolioData.lastUpdated).toISOString()}
-        - Total Transaction Count: ${portfolioData.totalTransactionCount}
+        Wallet Data:
+        - Address: ${walletData.address}
+        - Last Updated: ${new Date(walletData.lastUpdated).toISOString()}
+        - Total Transaction Count: ${walletData.totalTransactionCount}
         
         Chain Data:
-        ${Object.entries(portfolioData.chains || {}).map(([chain, data]) => `
+        ${Object.entries(walletData.chains || {}).map(([chain, data]) => `
         ${chain.toUpperCase()}:
         - Native Balance: ${data.nativeBalance} ${data.nativeSymbol}
         - Total Transactions: ${data.totalTransactions}
@@ -184,24 +184,26 @@ class GeminiService {
           })), null, 2)}
         `).join('\n')}
         
-        Summary:
-        - Received Count: ${portfolioData.summary?.receivedCount || 0}
-        - Sent Count: ${portfolioData.summary?.sentCount || 0}
-        - Total Received: ${JSON.stringify(portfolioData.summary?.totalReceived || {}, null, 2)}
-        - Total Sent: ${JSON.stringify(portfolioData.summary?.totalSent || {}, null, 2)}
-        - Token Holdings: ${JSON.stringify(portfolioData.summary?.tokenHoldings || [], null, 2)}
+        Portfolio Summary:
+        - Received Count: ${walletData.portfolioSummary?.receivedCount || 0}
+        - Sent Count: ${walletData.portfolioSummary?.sentCount || 0}
+        - Total Received: ${JSON.stringify(walletData.portfolioSummary?.totalReceived || {}, null, 2)}
+        - Total Sent: ${JSON.stringify(walletData.portfolioSummary?.totalSent || {}, null, 2)}
+        - Token Holdings: ${JSON.stringify(walletData.portfolioSummary?.tokenHoldings || [], null, 2)}
         
-        RAW TRANSACTION DATA (IMPORTANT):
-        ${JSON.stringify(Object.entries(portfolioData.chains || {}).reduce((acc, [chain, data]) => {
-          if (data.transactions) {
-            acc[chain] = data.transactions.filter(tx => 
-              tx.tokenSymbol === 'VINE' || 
-              tx.tokenName === 'Vine' || 
-              tx.tokenAddress === '6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump'
-            );
-          }
-          return acc;
-        }, {}), null, 2)}
+        Token Summaries:
+        ${JSON.stringify(walletData.rawData?.tokenSummaries || [], null, 2)}
+        
+        SPECIAL TOKEN DATA (IMPORTANT):
+        
+        VINE TOKEN TRANSACTIONS:
+        ${JSON.stringify(walletData.specialTokens?.VINE || [], null, 2)}
+        
+        TRUMP TOKEN TRANSACTIONS:
+        ${JSON.stringify(walletData.specialTokens?.TRUMP || [], null, 2)}
+        
+        USDC TOKEN TRANSACTIONS:
+        ${JSON.stringify(walletData.specialTokens?.USDC || [], null, 2)}
         
         IMPORTANT INSTRUCTIONS FOR TOKEN ANALYSIS:
         1. Look at each chain's data separately (ethereum-mainnet, base-mainnet, solana-mainnet)
@@ -213,10 +215,11 @@ class GeminiService {
         5. Calculate totals by summing amounts for specific tokens
         6. Count transactions by looking at receivedTransactions and sentTransactions
         7. Be specific about token names, amounts, and transaction details when available
-        8. IMPORTANT: Check the RAW TRANSACTION DATA section for specific token transactions
+        8. IMPORTANT: Check the SPECIAL TOKEN DATA section for specific token transactions
         9. For VINE token specifically, look at transactions with tokenAddress = '6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump'
+        10. Use the Token Summaries section for accurate token balance and transaction count information
         
-        Provide a helpful, accurate answer based on the detailed portfolio data. You can analyze token balances, transaction history, and token holdings to answer questions about profits, losses, best performing tokens, etc.
+        Provide a helpful, accurate answer based on the detailed wallet data. You can analyze token balances, transaction history, and token holdings to answer questions about profits, losses, best performing tokens, etc.
         
         Keep the response conversational and helpful.
       `;

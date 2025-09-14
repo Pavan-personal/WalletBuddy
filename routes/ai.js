@@ -4,6 +4,94 @@ const geminiService = require('../services/geminiService');
 const tatumService = require('../services/tatumService');
 const prismaService = require('../services/prismaService');
 const rpcService = require('../services/rpcService');
+const portfolioService = require('../services/portfolioService');
+
+// Function to get complete wallet data from all three tables
+async function getCompleteWalletData(address) {
+  try {
+    console.log(`📊 Getting complete wallet data for ${address} from all tables`);
+    
+    // Normalize address for database queries
+    const normalizedAddress = address.toLowerCase();
+    
+    // 1. Get portfolio data (cached if available)
+    const portfolioResult = await portfolioService.getComprehensivePortfolio(address);
+    if (!portfolioResult.success) {
+      return {
+        success: false,
+        error: portfolioResult.error || 'Failed to get portfolio data'
+      };
+    }
+    const portfolioData = portfolioResult.data;
+    
+    // 2. Get all transactions across chains
+    const networks = ['ethereum-mainnet', 'base-mainnet', 'solana-mainnet'];
+    const allTransactions = [];
+    
+    for (const network of networks) {
+      const transactions = await prismaService.getCachedTransactions(normalizedAddress, network, 1000);
+      allTransactions.push(...transactions);
+    }
+    
+    // 3. Get token summaries across chains
+    const allTokenSummaries = [];
+    
+    for (const network of networks) {
+      const tokenSummaries = await prismaService.getTokenSummary(normalizedAddress, network);
+      allTokenSummaries.push(...tokenSummaries);
+    }
+    
+    // 4. Combine all data into a structured format
+    const completeData = {
+      address: address,
+      lastUpdated: Date.now(),
+      
+      // Portfolio data
+      portfolioSummary: portfolioData.summary,
+      chains: portfolioData.chains,
+      totalValueUSD: portfolioData.totalValueUSD,
+      totalTransactionCount: portfolioData.totalTransactionCount,
+      
+      // Raw data from all tables
+      rawData: {
+        transactions: allTransactions,
+        tokenSummaries: allTokenSummaries,
+        portfolio: portfolioData
+      },
+      
+      // Special sections for specific tokens (VINE, TRUMP, etc.)
+      specialTokens: {
+        VINE: allTransactions.filter(tx => 
+          tx.tokenSymbol === 'VINE' || 
+          tx.tokenName === 'Vine' || 
+          tx.tokenAddress === '6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump'
+        ),
+        TRUMP: allTransactions.filter(tx => 
+          tx.tokenSymbol === 'TRUMP' || 
+          tx.tokenName?.includes('Trump') || 
+          ['6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN', 'E4jzcSdKf6bD8L4DPQj5iW7t9yTUa4kXfFuTGM7cdqTb', '4h8LjZWUfUQVgbEZ29UzTuGXNW6rwrJis78ZU66ekkPV'].includes(tx.tokenAddress)
+        ),
+        USDC: allTransactions.filter(tx => 
+          tx.tokenSymbol === 'USDC' || 
+          tx.tokenName === 'USD Coin' || 
+          tx.tokenAddress === '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' ||
+          tx.tokenAddress === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+        )
+      }
+    };
+    
+    return {
+      success: true,
+      data: completeData
+    };
+  } catch (error) {
+    console.error('Error getting complete wallet data:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
 
 // Ask AI a question about portfolio
 router.post('/ask', async (req, res) => {
@@ -349,20 +437,21 @@ router.post('/query', async (req, res) => {
       }
     }
     
-    // For complex queries, use comprehensive portfolio data
-    console.log('🔍 Complex query - using comprehensive portfolio data');
-    const portfolioService = require('../services/portfolioService');
-    const portfolioResult = await portfolioService.getComprehensivePortfolio(address);
+    // For complex queries, use comprehensive data from all tables
+    console.log('🔍 Complex query - using comprehensive data from all database tables');
     
-    if (!portfolioResult.success) {
+    // Get data from all three tables
+    const completeWalletData = await getCompleteWalletData(address);
+    
+    if (!completeWalletData.success) {
       return res.status(500).json({
         success: false,
-        error: portfolioResult.error || 'Failed to get portfolio data'
+        error: completeWalletData.error || 'Failed to get wallet data'
       });
     }
     
-    // Get AI answer with comprehensive data
-    const answerResult = await geminiService.answerQuestion(query, portfolioResult.data);
+    // Get AI answer with complete wallet data
+    const answerResult = await geminiService.answerQuestion(query, completeWalletData.data);
     
     if (!answerResult.success) {
       return res.status(500).json({
