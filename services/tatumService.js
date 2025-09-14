@@ -777,57 +777,8 @@ class TatumService {
       const tokenSummaries = new Map();
       const batchSize = 10; // Process transactions in batches
 
-      // Known token addresses for Solana
-      const knownTokens = {
-        // Major tokens
-        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v": {
-          symbol: "USDC",
-          name: "USD Coin"
-        },
-        "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB": {
-          symbol: "USDT", 
-          name: "Tether USD"
-        },
-        "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So": {
-          symbol: "mSOL",
-          name: "Marinade Staked SOL"
-        },
-        "7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj": {
-          symbol: "stSOL",
-          name: "Lido Staked SOL"
-        },
-        // VINE token
-        "4Q6WW2ouZ6V3iaF56hgF6hXWgJtT4nXgKcQzqo7Wn1fQ": {
-          symbol: "VINE",
-          name: "VINE Token"
-        },
-        // TRUMP tokens
-        "6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN": {
-          symbol: "TRUMP",
-          name: "Trump Token"
-        },
-        "E4jzcSdKf6bD8L4DPQj5iW7t9yTUa4kXfFuTGM7cdqTb": {
-          symbol: "TRUMP",
-          name: "Trump Token"
-        },
-        "4h8LjZWUfUQVgbEZ29UzTuGXNW6rwrJis78ZU66ekkPV": {
-          symbol: "TRUMP",
-          name: "Trump Token"
-        },
-        // Common pump.fun tokens (examples - addresses ending in "pump")
-        "HR8XXXMDrNFBsYrVXu3rioxHe1uZGrocrZGofKcMpump": {
-          symbol: "PUMP1",
-          name: "Pump Fun Token 1"
-        },
-        "6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump": {
-          symbol: "PUMP2", 
-          name: "Pump Fun Token 2"
-        },
-        "7Goxr2Ynq1Nft7LKjaGH4otcE2TZjNx5VDGizA6DakGp": {
-          symbol: "MEME1",
-          name: "Meme Token 1"
-        }
-      };
+      // Use the tokenMetadataService for consistency
+      const tokenMetadataService = require('./tokenMetadataService');
 
       // Process transactions in batches to avoid overwhelming the API (2 requests per second)
       const RATE_LIMIT_BATCH_SIZE = 2; // 2 requests per second
@@ -937,18 +888,20 @@ class TatumService {
                     let name = 'Unknown Token';
                     
                     try {
+                      // Get metadata from the tokenMetadataService
                       const metadata = await tokenMetadataService.getTokenMetadata(mint, 'solana-mainnet');
                       if (metadata) {
                         symbol = metadata.symbol || symbol;
                         name = metadata.name || name;
                         decimals = metadata.decimals || decimals;
+                        console.log(`✅ Token metadata for ${mint}: ${symbol} (${name})`);
                       }
                     } catch (error) {
                       console.warn(`Failed to fetch metadata for token ${mint}:`, error.message);
                     }
                   
-                  // Try to get token info from instructions
-                  if (symbol === 'Unknown' && result.transaction?.message?.instructions) {
+                  // Try to get token info from instructions if still unknown
+                  if ((symbol === 'Unknown' || name === 'Unknown Token') && result.transaction?.message?.instructions) {
                     // Try to extract token info from instructions
                     for (const instruction of result.transaction.message.instructions) {
                       if (instruction.parsed && instruction.parsed.type === 'transferChecked') {

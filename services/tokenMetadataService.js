@@ -216,10 +216,35 @@ class TokenMetadataService {
 
     // Known major tokens
     const knownTokens = {
+      // Solana tokens
       'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': { symbol: 'USDC', name: 'USD Coin', decimals: 6 },
       'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': { symbol: 'USDT', name: 'Tether USD', decimals: 6 },
       'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So': { symbol: 'mSOL', name: 'Marinade Staked SOL', decimals: 9 },
+      '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj': { symbol: 'stSOL', name: 'Lido Staked SOL', decimals: 9 },
+      
+      // VINE token
+      '4Q6WW2ouZ6V3iaF56hgF6hXWgJtT4nXgKcQzqo7Wn1fQ': { symbol: 'VINE', name: 'VINE Token', decimals: 9 },
+      
+      // TRUMP tokens
+      '6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN': { symbol: 'TRUMP', name: 'Trump Token', decimals: 6 },
+      'E4jzcSdKf6bD8L4DPQj5iW7t9yTUa4kXfFuTGM7cdqTb': { symbol: 'TRUMP', name: 'Trump Token', decimals: 6 },
+      '4h8LjZWUfUQVgbEZ29UzTuGXNW6rwrJis78ZU66ekkPV': { symbol: 'TRUMP', name: 'Trump Token', decimals: 6 },
+      
+      // DOGE
+      'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': { symbol: 'DOGE', name: 'Dogecoin', decimals: 8 },
+      
+      // Jupiter
+      'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN': { symbol: 'JUP', name: 'Jupiter', decimals: 6 },
+      
+      // UFD
+      'UFDGrSH8iE9J8jMQAVpY6qAHdMnQC8pg1UjmTDfhcQn': { symbol: 'UFD', name: 'UFD Token', decimals: 9 },
+      
+      // Base tokens
       '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913': { symbol: 'USDC', name: 'USD Coin', decimals: 6 }, // Base USDC
+      
+      // Ethereum tokens
+      '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': { symbol: 'USDC', name: 'USD Coin', decimals: 6 }, // Ethereum USDC
+      '0xdac17f958d2ee523a2206206994597c13d831ec7': { symbol: 'USDT', name: 'Tether USD', decimals: 6 }, // Ethereum USDT
     };
 
     const known = knownTokens[tokenAddress];
