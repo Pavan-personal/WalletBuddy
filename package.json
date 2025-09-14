@@ -8,7 +8,10 @@
     "dev": "nodemon server.js",
     "test": "jest",
     "test-complete": "node test-complete-system.js",
-    "init-db": "node scripts/init-database.js"
+    "init-db": "npx prisma db push",
+    "build": "npm install && npx prisma generate",
+    "postbuild": "npm run init-db",
+    "deploy": "npm run build && npm start"
   },
   "dependencies": {
     "@google/generative-ai": "^0.2.0",

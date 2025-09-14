@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,33 +7,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Transaction model to store detailed transaction data for all chains
 model WalletTransaction {
-  id                  Int      @id @default(autoincrement())
-  walletAddress       String
-  network             String
-  transactionHash     String
-  blockNumber         String?
-  slotNumber          String?
-  timestamp           String?
-  transactionType     String?
-  transactionSubtype  String?
-  amount              String?
-  tokenAddress        String?
-  tokenSymbol         String?
-  tokenName           String?
-  tokenDecimals       Int?
-  fromAddress         String?
-  toAddress           String?
-  fee                 String?
-  memo                String?
-  errorMessage        String?
-  confirmationStatus  String?
-  instructionsCount   Int?
-  signersCount        Int?
-  rawTransactionData  String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @default(now())
+  id                 Int      @id @default(autoincrement())
+  walletAddress      String
+  network            String
+  transactionHash    String
+  blockNumber        String?
+  slotNumber         String?
+  timestamp          String?
+  transactionType    String?
+  transactionSubtype String?
+  amount             String?
+  tokenAddress       String?
+  tokenSymbol        String?
+  tokenName          String?
+  tokenDecimals      Int?
+  fromAddress        String?
+  toAddress          String?
+  fee                String?
+  memo               String?
+  errorMessage       String?
+  confirmationStatus String?
+  instructionsCount  Int?
+  signersCount       Int?
+  rawTransactionData String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now())
 
   @@unique([walletAddress, network, transactionHash])
   @@index([walletAddress])
@@ -47,22 +43,21 @@ model WalletTransaction {
   @@map("wallet_transactions")
 }
 
-// Token summary model for quick lookups
 model WalletTokenSummary {
-  id                      Int      @id @default(autoincrement())
-  walletAddress           String
-  network                 String
-  tokenAddress            String
-  tokenSymbol             String?
-  tokenName               String?
-  totalReceived           String   @default("0")
-  totalSent               String   @default("0")
-  currentBalance          String   @default("0")
-  transactionCount        Int      @default(0)
+  id                        Int      @id @default(autoincrement())
+  walletAddress             String
+  network                   String
+  tokenAddress              String
+  tokenSymbol               String?
+  tokenName                 String?
+  totalReceived             String   @default("0")
+  totalSent                 String   @default("0")
+  currentBalance            String   @default("0")
+  transactionCount          Int      @default(0)
   firstTransactionTimestamp String?
   lastTransactionTimestamp  String?
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @default(now())
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @default(now())
 
   @@unique([walletAddress, network, tokenAddress])
   @@index([walletAddress])
@@ -71,7 +66,6 @@ model WalletTokenSummary {
   @@map("wallet_token_summary")
 }
 
-// Portfolio cache model for storing comprehensive portfolio data
 model WalletPortfolio {
   id            Int      @id @default(autoincrement())
   walletAddress String   @unique
