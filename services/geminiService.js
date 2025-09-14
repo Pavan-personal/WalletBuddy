@@ -191,6 +191,21 @@ class GeminiService {
         - Total Sent: ${JSON.stringify(walletData.portfolioSummary?.totalSent || {}, null, 2)}
         - Token Holdings: ${JSON.stringify(walletData.portfolioSummary?.tokenHoldings || [], null, 2)}
         
+        UNIQUE TOKENS (${walletData.uniqueTokenCount || 0} total):
+        ${JSON.stringify(walletData.uniqueTokens || [], null, 2)}
+        
+        SOLANA TOKENS:
+        ${JSON.stringify(walletData.networkTokens?.['solana-mainnet'] || [], null, 2)}
+        
+        ETHEREUM TOKENS:
+        ${JSON.stringify(walletData.networkTokens?.['ethereum-mainnet'] || [], null, 2)}
+        
+        BASE TOKENS:
+        ${JSON.stringify(walletData.networkTokens?.['base-mainnet'] || [], null, 2)}
+        
+        TOKEN TRANSACTION HISTORY (by date):
+        ${JSON.stringify(walletData.tokenTransactionHistory || {}, null, 2)}
+        
         Token Summaries:
         ${JSON.stringify(walletData.rawData?.tokenSummaries || [], null, 2)}
         
@@ -205,19 +220,29 @@ class GeminiService {
         USDC TOKEN TRANSACTIONS:
         ${JSON.stringify(walletData.specialTokens?.USDC || [], null, 2)}
         
+        PUMP TOKEN TRANSACTIONS:
+        ${JSON.stringify(walletData.specialTokens?.PUMP || [], null, 2)}
+        
         IMPORTANT INSTRUCTIONS FOR TOKEN ANALYSIS:
         1. Look at each chain's data separately (ethereum-mainnet, base-mainnet, solana-mainnet)
-        2. For Solana, check for specific token addresses like:
+        2. ALWAYS check the UNIQUE TOKENS section first - it has the most accurate count of unique tokens
+        3. Use the network-specific token sections (SOLANA TOKENS, ETHEREUM TOKENS, BASE TOKENS) to analyze tokens by chain
+        4. For Solana, check for specific token addresses like:
            - VINE: 6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump
            - TRUMP tokens: 6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN, E4jzcSdKf6bD8L4DPQj5iW7t9yTUa4kXfFuTGM7cdqTb, 4h8LjZWUfUQVgbEZ29UzTuGXNW6rwrJis78ZU66ekkPV
-        3. For Base chain, check for USDC token: 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
-        4. Analyze tokenSymbol and tokenName fields for better identification
-        5. Calculate totals by summing amounts for specific tokens
-        6. Count transactions by looking at receivedTransactions and sentTransactions
-        7. Be specific about token names, amounts, and transaction details when available
-        8. IMPORTANT: Check the SPECIAL TOKEN DATA section for specific token transactions
-        9. For VINE token specifically, look at transactions with tokenAddress = '6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump'
-        10. Use the Token Summaries section for accurate token balance and transaction count information
+        5. For Base chain, check for USDC token: 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
+        6. Analyze tokenSymbol and tokenName fields for better identification
+        7. The uniqueTokens array contains important details:
+           - transaction counts (total, sent, received)
+           - total amounts for each token
+           - firstTransaction and lastTransaction with dates
+           - largestTransaction with amount and date
+           - recentTransactions with amounts and dates
+        8. The TOKEN TRANSACTION HISTORY section shows token activity by date - use this for time-based analysis
+        9. Be specific about token names, amounts, and transaction dates when available
+        10. IMPORTANT: Check the SPECIAL TOKEN DATA section for specific token transactions
+        11. For PUMP tokens, look for tokens with "pump" in the address or "Pump.fun" in the name
+        12. When analyzing profits/losses, use the totalAmount field in uniqueTokens and the netAmount in tokenTransactionHistory
         
         Provide a helpful, accurate answer based on the detailed wallet data. You can analyze token balances, transaction history, and token holdings to answer questions about profits, losses, best performing tokens, etc.
         

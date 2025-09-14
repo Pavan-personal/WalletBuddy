@@ -41,7 +41,142 @@ async function getCompleteWalletData(address) {
       allTokenSummaries.push(...tokenSummaries);
     }
     
-    // 4. Combine all data into a structured format
+    // 4. Process transactions to get unique tokens with detailed information
+    const uniqueTokens = {};
+    const networkTokens = {
+      'ethereum-mainnet': [],
+      'base-mainnet': [],
+      'solana-mainnet': []
+    };
+    
+    // Track token transactions by date
+    const tokenTransactionsByDate = {};
+    
+    allTransactions.forEach(tx => {
+      if (tx.tokenAddress) {
+        const key = `${tx.network}:${tx.tokenAddress}`;
+        if (!uniqueTokens[key]) {
+          uniqueTokens[key] = {
+            network: tx.network,
+            address: tx.tokenAddress,
+            symbol: tx.tokenSymbol || 'Unknown',
+            name: tx.tokenName || 'Unknown Token',
+            decimals: tx.tokenDecimals || 0,
+            transactions: 0,
+            sent: 0,
+            received: 0,
+            totalAmount: 0,
+            firstTransaction: null,
+            lastTransaction: null,
+            largestTransaction: null,
+            recentTransactions: []
+          };
+          
+          // Add to network-specific list
+          if (networkTokens[tx.network]) {
+            networkTokens[tx.network].push(uniqueTokens[key]);
+          }
+          
+          // Initialize date tracking for this token
+          tokenTransactionsByDate[key] = {};
+        }
+        
+        uniqueTokens[key].transactions++;
+        
+        // Track sent/received and update transaction details
+        const amount = parseFloat(tx.amount || 0);
+        const timestamp = parseInt(tx.timestamp || 0);
+        const date = timestamp ? new Date(timestamp).toISOString().split('T')[0] : 'unknown';
+        
+        // Track transactions by date
+        if (!tokenTransactionsByDate[key][date]) {
+          tokenTransactionsByDate[key][date] = {
+            date,
+            count: 0,
+            sent: 0,
+            received: 0,
+            netAmount: 0
+          };
+        }
+        tokenTransactionsByDate[key][date].count++;
+        
+        // Process transaction type and amount
+        if (tx.transactionType === 'send' || amount < 0) {
+          uniqueTokens[key].sent++;
+          uniqueTokens[key].totalAmount -= Math.abs(amount);
+          tokenTransactionsByDate[key][date].sent++;
+          tokenTransactionsByDate[key][date].netAmount -= Math.abs(amount);
+        } else if (tx.transactionType === 'receive' || amount > 0) {
+          uniqueTokens[key].received++;
+          uniqueTokens[key].totalAmount += Math.abs(amount);
+          tokenTransactionsByDate[key][date].received++;
+          tokenTransactionsByDate[key][date].netAmount += Math.abs(amount);
+        }
+        
+        // Track first transaction
+        if (!uniqueTokens[key].firstTransaction || 
+            (timestamp && timestamp < parseInt(uniqueTokens[key].firstTransaction?.timestamp || Infinity))) {
+          uniqueTokens[key].firstTransaction = {
+            hash: tx.transactionHash,
+            timestamp: tx.timestamp,
+            type: tx.transactionType,
+            amount: tx.amount,
+            date: date !== 'unknown' ? date : null
+          };
+        }
+        
+        // Track last transaction
+        if (!uniqueTokens[key].lastTransaction || 
+            (timestamp && timestamp > parseInt(uniqueTokens[key].lastTransaction?.timestamp || 0))) {
+          uniqueTokens[key].lastTransaction = {
+            hash: tx.transactionHash,
+            timestamp: tx.timestamp,
+            type: tx.transactionType,
+            amount: tx.amount,
+            date: date !== 'unknown' ? date : null
+          };
+        }
+        
+        // Track largest transaction by absolute amount
+        if (!uniqueTokens[key].largestTransaction || 
+            (Math.abs(amount) > Math.abs(parseFloat(uniqueTokens[key].largestTransaction?.amount || 0)))) {
+          uniqueTokens[key].largestTransaction = {
+            hash: tx.transactionHash,
+            timestamp: tx.timestamp,
+            type: tx.transactionType,
+            amount: tx.amount,
+            date: date !== 'unknown' ? date : null
+          };
+        }
+        
+        // Add to recent transactions (keep only 5 most recent)
+        uniqueTokens[key].recentTransactions.push({
+          hash: tx.transactionHash,
+          timestamp: tx.timestamp,
+          type: tx.transactionType,
+          amount: tx.amount,
+          date: date !== 'unknown' ? date : null
+        });
+      }
+    });
+    
+    // Sort recent transactions by timestamp (newest first) and limit to 5
+    Object.values(uniqueTokens).forEach(token => {
+      token.recentTransactions.sort((a, b) => {
+        const timestampA = parseInt(a.timestamp || 0);
+        const timestampB = parseInt(b.timestamp || 0);
+        return timestampB - timestampA;
+      });
+      token.recentTransactions = token.recentTransactions.slice(0, 5);
+    });
+    
+    // Convert date tracking to arrays for easier consumption
+    const tokenTransactionHistory = {};
+    Object.entries(tokenTransactionsByDate).forEach(([tokenKey, dates]) => {
+      tokenTransactionHistory[tokenKey] = Object.values(dates).sort((a, b) => a.date.localeCompare(b.date));
+    });
+    
+    // 5. Combine all data into a structured format
     const completeData = {
       address: address,
       lastUpdated: Date.now(),
@@ -51,6 +186,12 @@ async function getCompleteWalletData(address) {
       chains: portfolioData.chains,
       totalValueUSD: portfolioData.totalValueUSD,
       totalTransactionCount: portfolioData.totalTransactionCount,
+      
+      // Token data
+      uniqueTokens: Object.values(uniqueTokens),
+      uniqueTokenCount: Object.keys(uniqueTokens).length,
+      networkTokens: networkTokens,
+      tokenTransactionHistory: tokenTransactionHistory,
       
       // Raw data from all tables
       rawData: {
@@ -76,6 +217,11 @@ async function getCompleteWalletData(address) {
           tx.tokenName === 'USD Coin' || 
           tx.tokenAddress === '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' ||
           tx.tokenAddress === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+        ),
+        PUMP: allTransactions.filter(tx => 
+          tx.tokenSymbol?.includes('PUMP') || 
+          tx.tokenName?.includes('Pump.fun') || 
+          tx.tokenAddress?.includes('pump')
         )
       }
     };
