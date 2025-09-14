@@ -525,7 +525,9 @@ router.post('/query', async (req, res) => {
     console.log(`🤖 AI Query: "${query}" for ${address} across all chains`);
     
     // Check if this is a simple balance query - use fast RPC instead of heavy DB
-    const isBalanceQuery = /balance|how much|what.*balance/i.test(query);
+    // Skip fast path for token-specific queries (VINE, TRUMP, etc.)
+    const isTokenQuery = /VINE|TRUMP|USDC|PUMP|token/i.test(query);
+    const isBalanceQuery = !isTokenQuery && /balance|how much|what.*balance/i.test(query);
     
     if (isBalanceQuery) {
       console.log('🚀 Detected balance query - using fast RPC calls');

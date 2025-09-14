@@ -162,7 +162,7 @@ class GeminiService {
         
         Wallet Data:
         - Address: ${walletData.address}
-        - Last Updated: ${new Date(walletData.lastUpdated).toISOString()}
+        - Last Updated: ${walletData.lastUpdated ? new Date(walletData.lastUpdated).toISOString() : new Date().toISOString()}
         - Total Transaction Count: ${walletData.totalTransactionCount}
         
         Chain Data:
