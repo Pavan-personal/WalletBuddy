@@ -18,6 +18,8 @@ class PortfolioService {
         };
       }
       
+      console.log(`⚠️ No cached portfolio found for ${address}, creating from database transactions`);
+      
       // Initialize portfolio object
       const portfolio = {
         address,
@@ -63,35 +65,49 @@ class PortfolioService {
             continue;
           }
           
-          // Get native balance
+          // Get native balance from database first
           let nativeBalance = '0';
           let nativeSymbol = 'Unknown';
           let nativeName = 'Unknown';
           let nativeDecimals = 18;
           
-          if (chain === 'ethereum-mainnet') {
-            const balanceResponse = await sdk.rpc.getBalance(address);
-            if (balanceResponse && balanceResponse.result) {
-              nativeBalance = (parseInt(balanceResponse.result, 16) / 1e18).toString();
-              nativeSymbol = 'ETH';
-              nativeName = 'Ethereum';
-              nativeDecimals = 18;
-            }
-          } else if (chain === 'base-mainnet') {
-            const balanceResponse = await sdk.rpc.getBalance(address);
-            if (balanceResponse && balanceResponse.result) {
-              nativeBalance = (parseInt(balanceResponse.result, 16) / 1e18).toString();
-              nativeSymbol = 'ETH';
-              nativeName = 'Ethereum';
-              nativeDecimals = 18;
-            }
-          } else if (chain === 'solana-mainnet') {
-            const balanceResponse = await sdk.rpc.getBalance(address);
-            if (balanceResponse && balanceResponse.result) {
-              nativeBalance = (balanceResponse.result.value / 1e9).toString();
-              nativeSymbol = 'SOL';
-              nativeName = 'Solana';
-              nativeDecimals = 9;
+          // Check for native token in database
+          const nativeTokenSummary = await prismaService.getTokenSummary(address, chain);
+          const nativeToken = nativeTokenSummary?.find(t => t.tokenAddress === 'native');
+          
+          if (nativeToken) {
+            console.log(`📦 Found native token balance in database for ${address} on ${chain}`);
+            nativeBalance = nativeToken.currentBalance;
+            nativeSymbol = nativeToken.tokenSymbol;
+            nativeName = nativeToken.tokenName;
+            nativeDecimals = nativeToken.tokenDecimals;
+          } else {
+            console.log(`⚠️ No native token balance in database for ${address} on ${chain}, using RPC calls`);
+            // Fallback to RPC calls
+            if (chain === 'ethereum-mainnet') {
+              const balanceResponse = await sdk.rpc.getBalance(address);
+              if (balanceResponse && balanceResponse.result) {
+                nativeBalance = (parseInt(balanceResponse.result, 16) / 1e18).toString();
+                nativeSymbol = 'ETH';
+                nativeName = 'Ethereum';
+                nativeDecimals = 18;
+              }
+            } else if (chain === 'base-mainnet') {
+              const balanceResponse = await sdk.rpc.getBalance(address);
+              if (balanceResponse && balanceResponse.result) {
+                nativeBalance = (parseInt(balanceResponse.result, 16) / 1e18).toString();
+                nativeSymbol = 'ETH';
+                nativeName = 'Ethereum';
+                nativeDecimals = 18;
+              }
+            } else if (chain === 'solana-mainnet') {
+              const balanceResponse = await sdk.rpc.getBalance(address);
+              if (balanceResponse && balanceResponse.result) {
+                nativeBalance = (balanceResponse.result.value / 1e9).toString();
+                nativeSymbol = 'SOL';
+                nativeName = 'Solana';
+                nativeDecimals = 9;
+              }
             }
           }
           
@@ -122,22 +138,58 @@ class PortfolioService {
             });
           }
           
-          // Get token balances
-          const tokenBalances = await tatumService.getTokenBalances(chain, address);
-          if (tokenBalances && tokenBalances.success && tokenBalances.data && tokenBalances.data.tokens) {
-            portfolio.chains[chain].tokens = tokenBalances.data.tokens;
+          // Get token balances from database first
+          const tokenSummaries = await prismaService.getTokenSummary(address, chain);
+          
+          if (tokenSummaries && tokenSummaries.length > 0) {
+            console.log(`📦 Found ${tokenSummaries.length} cached token summaries for ${address} on ${chain}`);
+            
+            // Convert token summaries to the expected format
+            const tokens = tokenSummaries.map(token => ({
+              chain,
+              tokenAddress: token.tokenAddress,
+              type: token.tokenAddress === 'native' ? 'native' : 'fungible',
+              address: address,
+              balance: token.currentBalance,
+              name: token.tokenName,
+              symbol: token.tokenSymbol,
+              decimals: token.tokenDecimals
+            }));
+            
+            portfolio.chains[chain].tokens = tokens;
             
             // Add tokens to summary holdings
-            for (const token of tokenBalances.data.tokens) {
+            for (const token of tokens) {
               if (parseFloat(token.balance) > 0) {
                 portfolio.summary.tokenHoldings.push({
                   chain,
-                  tokenAddress: token.address || token.tokenAddress,
+                  tokenAddress: token.tokenAddress,
                   symbol: token.symbol,
                   name: token.name,
                   balance: token.balance,
                   decimals: token.decimals
                 });
+              }
+            }
+          } else {
+            // Fallback to RPC calls if no data in database
+            console.log(`⚠️ No token summaries found in database for ${address} on ${chain}, using RPC calls`);
+            const tokenBalances = await tatumService.getTokenBalances(chain, address);
+            if (tokenBalances && tokenBalances.success && tokenBalances.data && tokenBalances.data.tokens) {
+              portfolio.chains[chain].tokens = tokenBalances.data.tokens;
+              
+              // Add tokens to summary holdings
+              for (const token of tokenBalances.data.tokens) {
+                if (parseFloat(token.balance) > 0) {
+                  portfolio.summary.tokenHoldings.push({
+                    chain,
+                    tokenAddress: token.address || token.tokenAddress,
+                    symbol: token.symbol,
+                    name: token.name,
+                    balance: token.balance,
+                    decimals: token.decimals
+                  });
+                }
               }
             }
           }
@@ -147,19 +199,11 @@ class PortfolioService {
           const dbTransactions = await prismaService.getCachedTransactions(address, chain);
           let txs = dbTransactions;
           
-          // If no transactions in database, fetch from blockchain
+          // Use only what's in the database - no RPC calls for transactions
           if (txs.length === 0) {
-            const transactions = await tatumService.fetchAndCacheDetailedTransactions(chain, address);
-            if (transactions.success && transactions.data && transactions.data.transactions) {
-              txs = transactions.data.transactions;
-            }
+            console.log(`⚠️ No transactions found in database for ${address} on ${chain}`);
           } else {
             console.log(`📦 Found ${txs.length} cached transactions for ${address} on ${chain}`);
-          }
-          
-          // Get transactions again from database after fetching
-          if (txs.length === 0) {
-            txs = await prismaService.getCachedTransactions(address, chain);
           }
           
           portfolio.chains[chain].totalTransactions = txs.length;
@@ -460,14 +504,18 @@ class PortfolioService {
   // Get token transaction history
   async getTokenTransactionHistory(address, tokenSymbol) {
     try {
-      // Get all transactions across chains
+      // Get all transactions from database across chains
       const allTransactions = [];
       const chains = ['ethereum-mainnet', 'base-mainnet', 'solana-mainnet'];
       
       for (const chain of chains) {
-        const transactions = await tatumService.fetchAndCacheDetailedTransactions(chain, address);
-        if (transactions.success && transactions.data && transactions.data.transactions) {
-          allTransactions.push(...transactions.data.transactions);
+        // Use only database data - no RPC calls
+        const transactions = await prismaService.getCachedTransactions(address, chain);
+        if (transactions && transactions.length > 0) {
+          console.log(`📦 Found ${transactions.length} cached transactions for ${address} on ${chain}`);
+          allTransactions.push(...transactions);
+        } else {
+          console.log(`⚠️ No transactions found in database for ${address} on ${chain}`);
         }
       }
       
