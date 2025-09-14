@@ -674,13 +674,15 @@ class TatumService {
   // Enhanced method to fetch and cache ALL transaction data (with pagination)
   async fetchAndCacheDetailedTransactions(network, address, limit = null) {
     try {
-      console.log(`🔄 Fetching ALL detailed transactions for ${address} on ${network}`);
+      // Default to 250 transactions if no limit is provided
+      const transactionLimit = limit || 250;
+      console.log(`🔄 Fetching up to ${transactionLimit} detailed transactions for ${address} on ${network}`);
       
       // Check if we have cached data
       const hasCached = await prismaService.hasCachedData(address, network);
-      if (hasCached && !limit) {
+      if (hasCached) {
         console.log(`📦 Found cached data for ${address} on ${network}`);
-        const cachedTransactions = await prismaService.getCachedTransactions(address, network);
+        const cachedTransactions = await prismaService.getCachedTransactions(address, network, transactionLimit);
         return {
           success: true,
           data: {
@@ -694,16 +696,16 @@ class TatumService {
       }
 
       // Fetch fresh data from blockchain
-      console.log(`🌐 Fetching fresh transaction data from ${network} (ALL transactions)`);
+      console.log(`🌐 Fetching fresh transaction data from ${network} (limited to ${transactionLimit} transactions)`);
       const sdk = await this.getInstance(network);
       
       if (network === 'solana-mainnet') {
-        return await this.fetchAndCacheAllSolanaTransactions(sdk, address, limit);
+        return await this.fetchAndCacheAllSolanaTransactions(sdk, address, transactionLimit);
       } else if (network === 'ethereum-mainnet' || network === 'base-mainnet') {
-        return await this.fetchAndCacheAllEVMTransactions(sdk, address, network, limit);
+        return await this.fetchAndCacheAllEVMTransactions(sdk, address, network, transactionLimit);
       } else {
         // Fallback to basic transaction history
-        const transactions = await sdk.address.getTransactions({ address, pageSize: limit || 1000 });
+        const transactions = await sdk.address.getTransactions({ address, pageSize: Math.min(transactionLimit, 1000) });
         return {
           success: true,
           data: {
@@ -724,16 +726,16 @@ class TatumService {
     }
   }
 
-  // Fetch and cache ALL Solana transactions with pagination
-  async fetchAndCacheAllSolanaTransactions(sdk, address, limit = null) {
+  // Fetch and cache Solana transactions with pagination (limited to 250 by default)
+  async fetchAndCacheAllSolanaTransactions(sdk, address, limit = 250) {
     try {
-      console.log(`🔍 Fetching ALL Solana transactions for ${address}`);
+      console.log(`🔍 Fetching up to ${limit} Solana transactions for ${address}`);
       
-      // Get ALL transaction signatures with pagination
+      // Get transaction signatures with pagination
       let allSignatures = [];
       let before = null;
       let pageCount = 0;
-      const maxPages = limit ? Math.ceil(limit / 1000) : 100; // Max 100 pages = 100k transactions
+      const maxPages = Math.ceil(limit / 1000); // Calculate pages needed based on limit
       
       while (pageCount < maxPages) {
         console.log(`📄 Fetching page ${pageCount + 1} of signatures...`);
@@ -1265,10 +1267,10 @@ class TatumService {
     }
   }
 
-  // Fetch and cache ALL EVM transactions with pagination
-  async fetchAndCacheAllEVMTransactions(sdk, address, network, limit = null) {
+  // Fetch and cache EVM transactions with pagination (limited to 250 by default)
+  async fetchAndCacheAllEVMTransactions(sdk, address, network, limit = 250) {
     try {
-      console.log(`🔍 Fetching ALL EVM transactions for ${address} on ${network}`);
+      console.log(`🔍 Fetching up to ${limit} EVM transactions for ${address} on ${network}`);
       
       let allTransactions = [];
       

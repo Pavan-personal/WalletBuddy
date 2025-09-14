@@ -17,7 +17,7 @@ class PrismaService {
     }
   }
 
-  // Store detailed transaction data
+  // Store detailed transaction data with a limit of 250 most recent transactions
   async storeTransaction(transactionData) {
     try {
       const {
@@ -48,6 +48,7 @@ class PrismaService {
       // Normalize wallet address to lowercase
       const normalizedWalletAddress = walletAddress.toLowerCase();
 
+      // First, upsert the transaction
       await this.prisma.walletTransaction.upsert({
         where: {
           walletAddress_network_transactionHash: {
@@ -103,6 +104,52 @@ class PrismaService {
           rawTransactionData: rawTransactionData ? JSON.stringify(rawTransactionData) : null
         }
       });
+      
+      // Then, check if we have more than 250 transactions for this wallet and network
+      // If so, delete the oldest ones to keep only the most recent 250
+      const txCount = await this.prisma.walletTransaction.count({
+        where: {
+          walletAddress: normalizedWalletAddress,
+          network
+        }
+      });
+      
+      if (txCount > 250) {
+        console.log(`🔄 Pruning transactions for ${normalizedWalletAddress} on ${network} (${txCount} > 250)`);
+        
+        // Find the oldest transactions that exceed our limit
+        const excessCount = txCount - 250;
+        
+        // Get the oldest transactions to delete
+        const oldestTxs = await this.prisma.walletTransaction.findMany({
+          where: {
+            walletAddress: normalizedWalletAddress,
+            network
+          },
+          orderBy: {
+            // Order by timestamp first, then by ID to ensure deterministic ordering
+            timestamp: 'asc'
+          },
+          take: excessCount,
+          select: {
+            id: true
+          }
+        });
+        
+        // Delete the oldest transactions
+        if (oldestTxs.length > 0) {
+          const idsToDelete = oldestTxs.map(tx => tx.id);
+          await this.prisma.walletTransaction.deleteMany({
+            where: {
+              id: {
+                in: idsToDelete
+              }
+            }
+          });
+          
+          console.log(`🗑️ Deleted ${idsToDelete.length} oldest transactions for ${normalizedWalletAddress} on ${network}`);
+        }
+      }
 
       return true;
     } catch (error) {
@@ -112,10 +159,12 @@ class PrismaService {
   }
 
   // Get cached transactions for a wallet
-  async getCachedTransactions(walletAddress, network, limit = 100) {
+  async getCachedTransactions(walletAddress, network, limit = 250) {
     try {
       // SQLite doesn't support case-insensitive mode, so we need to normalize the address
       const normalizedAddress = walletAddress.toLowerCase();
+      
+      console.log(`📊 Getting up to ${limit} cached transactions for ${normalizedAddress} on ${network}`);
       
       const transactions = await this.prisma.walletTransaction.findMany({
         where: {
@@ -128,6 +177,7 @@ class PrismaService {
         take: limit
       });
 
+      console.log(`📦 Found ${transactions.length} cached transactions`);
       return transactions;
     } catch (error) {
       console.warn('Error getting cached transactions:', error.message);
