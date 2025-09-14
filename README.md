@@ -20,11 +20,11 @@
 
 # Normal questions like balance & transaction count can be answered by rpc node call.
 
-<img width="1470" height="670" alt="q5" src="https://github.com/user-attachments/assets/f0425e61-e4e8-45df-85fd-4f1560bf9dc3" />
+<img width="1470" height="670" alt="q6" src="https://github.com/user-attachments/assets/f56f6f92-44c7-413b-af7d-d14bb3e3e891" />
 
 # But complex queries like profit loss, token related, buys and sells, can be deduced from database. (which are initally fetched from rpc itself)
 
-<img width="1470" height="670" alt="q6" src="https://github.com/user-attachments/assets/f56f6f92-44c7-413b-af7d-d14bb3e3e891" />
+<img width="1470" height="670" alt="q5" src="https://github.com/user-attachments/assets/f0425e61-e4e8-45df-85fd-4f1560bf9dc3" />
 
 # Here I asked about Vine coin related transaction to AI and it answers as well.
 
