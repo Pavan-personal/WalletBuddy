@@ -2,6 +2,8 @@
 
 ## Demo
 
+- **YouTube**: [Demo](https://youtu.be/SOyUsXSZ1hY?si=C6h3P9XF5Yzod5Y0)
+
 # Starting the server with Gemini & Tatum API integrations.
 
 <img width="1470" height="670" alt="q1" src="https://github.com/user-attachments/assets/91f3c095-a4df-484b-99af-bcdb4b23d201" />
