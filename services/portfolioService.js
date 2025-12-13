@@ -2,12 +2,10 @@ const tatumService = require('./tatumService');
 const prismaService = require('./prismaService');
 
 class PortfolioService {
-  // Get comprehensive wallet portfolio across all chains
   async getComprehensivePortfolio(address) {
     try {
       console.log(`🔍 Getting comprehensive portfolio for ${address}`);
       
-      // Get cached portfolio if available
       const cachedPortfolio = await prismaService.getPortfolio(address);
       if (cachedPortfolio) {
         console.log(`📦 Found cached portfolio for ${address}`);
@@ -20,7 +18,6 @@ class PortfolioService {
       
       console.log(`⚠️ No cached portfolio found for ${address}, creating from database transactions`);
       
-      // Initialize portfolio object
       const portfolio = {
         address,
         lastUpdated: Date.now(),
